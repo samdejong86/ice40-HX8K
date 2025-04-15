@@ -13,7 +13,6 @@ VHDL=ledscan.vhd
 VHDL+=led_animate.vhd
 VHDL+=note_counter.vhd
 VHDL+=play_tune.vhd
-VHDL+=ROM-test.vhd
 VHDL+=music_top.vhd
 
 GHDL=$(patsubst %.vhd, %.ghd, $(VHDL))
@@ -30,14 +29,21 @@ MODULE=-m ghdl
 	ghdl -a -fsynopsys  $(basename $@).vhd
 	@touch $@
 
-iceFUN: $(GHDL) $(NOTES)
-	# synthesize using Yosys
+all: icePack
+
+# synthesize using Yosys
+synthesis: $(GHDL) $(NOTES)
 	yosys $(MODULE) -p 'ghdl -fsynopsys $(PROJ); synth_ice40 -json $(PROJ).json'
-	# Place and route using nextpnr
+
+# Place and route using nextpnr
+pnr: synthesis
 	nextpnr-ice40 -r --hx8k --json $(PROJ).json --package cb132 --asc $(PROJ).asc --opt-timing --pcf $(PINS)
-	# Convert to bitstream using IcePack
+
+# Convert to bitstream using IcePack
+icePack: pnr
 	icepack $(PROJ).asc $(PROJ).bin
 
+# Program the board
 burn:
 	iceFUNprog $(PROJ).bin
 
