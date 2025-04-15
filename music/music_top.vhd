@@ -99,7 +99,7 @@ begin
 
   inst_music : entity work.play_tune
     generic map(
-      notesFile => "scotlandTheBrave.mif"
+      notesFile => "./music-files/scotlandTheBrave.mif"
     )
     port map(
       clkNote => counter(19),

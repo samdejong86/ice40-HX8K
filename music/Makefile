@@ -6,7 +6,7 @@ PROJ = music_top
 # Pin constraints
 PINS = iceFUN.pcf
 
-NOTES=$(patsubst %.notes, %.bin, $(wildcard *.notes))
+NOTES=$(patsubst %.notes, %.bin, $(wildcard ./music-files/*.notes))
 
 # VHDL files in dependancy order
 VHDL=ledscan.vhd
@@ -42,4 +42,4 @@ burn:
 	iceFUNprog $(PROJ).bin
 
 clean:
-	rm -f *.asc *.mif *.cf *.ghd *.json
+	rm -f *.asc ./music-files/*.mif *.cf *.ghd *.json *.bin
