@@ -7,7 +7,7 @@ MUSIC=./music-files/tetris.notes
 MUSICMIF=$(patsubst %.notes,%.mif,$(wildcard $(MUSIC)))
 
 # Pin constraints
-PINS = iceFUN.pcf
+PINS = ../common/iceFUN.pcf
 
 # VHDL files in dependancy order
 VHDL=ledscan.vhd
@@ -24,8 +24,8 @@ MODULE=-m ghdl
 .PHONY: iceFUN clean burn
 
 %.ghd: %.vhd
+	echo $(VHDL)
 	ghdl -a -fsynopsys  $(basename $@).vhd
-	@touch $@
 
 all: icePack
 

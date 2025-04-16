@@ -5,7 +5,7 @@ PROJ = bounce_top
 
 
 # Pin constraints
-PINS = iceFUN.pcf
+PINS = ../common/iceFUN.pcf
 
 # VHDL files in dependancy order
 VHDL=ledscan.vhd
@@ -43,4 +43,4 @@ burn:
 	iceFUNprog $(PROJ).bin
 
 clean:
-	rm -f *.asc ./music-files/*.mif *.cf *.ghd *.json *.bin
+	rm -f *.asc *.cf *.json *.bin
