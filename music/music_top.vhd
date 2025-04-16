@@ -5,6 +5,9 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 
 entity music_top is
+  generic(
+    MUSIC_FILE : string := ""
+  );
   port(
     clk12MHz : in std_logic;
     keys     : in std_logic_vector(3 downto 0);
@@ -44,6 +47,9 @@ begin
     );
 
   inst_animate : entity work.led_animate
+    generic map(
+      glyph => "0000011001100000"
+    )
     port map(
       clkFrame =>counter(20),
       leds1 => led_row1,
@@ -63,7 +69,7 @@ begin
 
   inst_music : entity work.play_tune
     generic map(
-      notesFile => "./music-files/tetris.mif"
+      notesFile => MUSIC_FILE
     )
     port map(
       clkNote => counter(19),

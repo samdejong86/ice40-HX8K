@@ -3,10 +3,11 @@
 # Top level entity
 PROJ = music_top
 
+MUSIC=./music-files/tetris.notes
+MUSICMIF=$(patsubst %.notes,%.mif,$(wildcard $(MUSIC)))
+
 # Pin constraints
 PINS = iceFUN.pcf
-
-NOTES=$(patsubst %.notes, %.bin, $(wildcard ./music-files/*.notes))
 
 # VHDL files in dependancy order
 VHDL=ledscan.vhd
@@ -22,18 +23,18 @@ MODULE=-m ghdl
 
 .PHONY: iceFUN clean burn
 
-%.bin: %.notes
-	python songWriter.py $(basename $@).notes
-
 %.ghd: %.vhd
 	ghdl -a -fsynopsys  $(basename $@).vhd
 	@touch $@
 
 all: icePack
 
+$(MUSICMIF):
+	python songWriter.py $(MUSIC)
+
 # synthesize using Yosys
-synthesis: $(GHDL) $(NOTES)
-	yosys $(MODULE) -p 'ghdl -fsynopsys $(PROJ); synth_ice40 -json $(PROJ).json'
+synthesis: $(GHDL) $(MUSICMIF)
+	yosys $(MODULE) -p 'ghdl -gMUSIC_FILE=$(MUSICMIF) -fsynopsys $(PROJ); synth_ice40 -json $(PROJ).json'
 
 # Place and route using nextpnr
 pnr: synthesis
