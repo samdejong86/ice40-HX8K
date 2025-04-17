@@ -3,8 +3,20 @@
 # Top level entity
 PROJ = music_top
 
-MUSIC=./music-files/tetris.notes
-MUSICMIF=$(patsubst %.notes,%.mif,$(wildcard $(MUSIC)))
+MUSIC1=./music-files/tetris.notes
+MUSIC2=./music-files/lotz.notes
+MUSIC3=./music-files/mario.notes
+MUSIC4=./music-files/underground.notes
+
+ALL_MUSIC=$(MUSIC1)
+ALL_MUSIC+=$(MUSIC2)
+ALL_MUSIC+=$(MUSIC3)
+ALL_MUSIC+=$(MUSIC4)
+
+MUSICMIF=$(patsubst %.notes,%.mif,$(wildcard $(ALL_MUSIC)))
+
+indicies = $(shell seq $(words $(MUSICMIF)))
+MIFGENERICS = $(foreach x,$(indicies), -gMUSIC_FILE_$(x)=$(word $(x),$(MUSICMIF)))
 
 # Pin constraints
 PINS = ../common/iceFUN.pcf
@@ -23,18 +35,18 @@ MODULE=-m ghdl
 
 .PHONY: iceFUN clean burn
 
+%.mif : %.notes
+	python songWriter.py $(basename $@).notes
+
 %.ghd: %.vhd
-	echo $(VHDL)
-	ghdl -a -fsynopsys  $(basename $@).vhd
+	ghdl -a --std=08 -fsynopsys $(basename $@).vhd
 
 all: icePack
 
-$(MUSICMIF):
-	python songWriter.py $(MUSIC)
 
 # synthesize using Yosys
 synthesis: $(GHDL) $(MUSICMIF)
-	yosys $(MODULE) -p 'ghdl -gMUSIC_FILE=$(MUSICMIF) -fsynopsys $(PROJ); synth_ice40 -json $(PROJ).json'
+	yosys $(MODULE) -p 'ghdl --std=08 $(MIFGENERICS) -fsynopsys $(PROJ); synth_ice40 -json $(PROJ).json'
 
 # Place and route using nextpnr
 pnr: synthesis

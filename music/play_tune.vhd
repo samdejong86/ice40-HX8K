@@ -13,6 +13,7 @@ entity play_tune is
   port(
     clkNote : in std_logic;
     key : in std_logic;
+    nowPlaying : out std_logic;
     note : out std_logic_vector(14 downto 0)
   );
 end entity play_tune;
@@ -49,6 +50,8 @@ architecture behavioral of play_tune is
 
   signal duration : unsigned(4 downto 0);
 
+  signal nowPlaying_l : std_logic := '0';
+
 begin
 
   proc_tune_FSM : process(clkNote)
@@ -57,12 +60,14 @@ begin
         case(state) is
 
           when IDLE =>
+            nowPlaying_l <= '0';
             holdCounter <= (others => '0');
             noteCounter <= 0;
             note <= (others => '0');
             if key = '1' then
               state <= IDLE;
             else
+              nowPlaying_l <= '1';
               note <= songData(noteCounter+1)(19 downto 5);
               duration <= unsigned(songData(noteCounter+1)(4 downto 0));
               state <= PLAYNOTE;
@@ -83,6 +88,7 @@ begin
           when PAUSE =>
 	   if noteCounter = songLength then
               note <= (others => '0');
+              nowPlaying_l <= '0';
               state <= IDLE;
             else
               note <= songData(noteCounter+1)(19 downto 5);
@@ -94,5 +100,6 @@ begin
       end if;
     end process proc_tune_FSM;
 
+    nowPlaying <= nowPlaying_l;
 
 end architecture behavioral;
