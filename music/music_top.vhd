@@ -78,7 +78,7 @@ begin
       glyph => "0000011001100000"
     )
     port map(
-      clkFrame =>counter(20),
+      clkFrame =>counter(19),
       leds1 => led_row1,
       leds2 => led_row2,
       leds3 => led_row3,

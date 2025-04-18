@@ -32,6 +32,8 @@ line_count = 0
 with open(filename, 'r') as f:
     reader = csv.reader(f, dialect='excel', delimiter='\t')
     for row in reader:
+        if len(row) == 0:
+            continue
         line_count += 1
         noteTimer=0
         duration=row[2]
