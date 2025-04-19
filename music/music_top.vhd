@@ -74,11 +74,9 @@ begin
     );
 
   inst_animate : entity work.led_animate
-    generic map(
-      glyph => "0000011001100000"
-    )
     port map(
-      clkFrame =>counter(19),
+      clkFrame => counter(19),
+      enable => anyPlaying,
       leds1 => led_row1,
       leds2 => led_row2,
       leds3 => led_row3,
