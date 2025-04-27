@@ -130,20 +130,19 @@ begin
                                                              "111010"); --#FFAAAA
 
     constant GROUNDBLOCKSIZE : integer := 16;
-    constant N_BLOCKS : integer :=      10;
 
-    signal romData_g : t_slv_v(N_BLOCKS-1 downto 0)(GROUNDBLOCKSIZE*2-1 downto 0);
-    --signal addr_g : t_int_v(N_BLOCKS-1 downto 0);
-    signal addr_g : t_slv_v(N_BLOCKS-1 downto 0)(log2ceil(GROUNDBLOCKSIZE)-1 downto 0);
+    signal romData_g : t_slv_v(0 downto 0)(GROUNDBLOCKSIZE*2-1 downto 0);
+    signal grnd_rom_addr : std_logic_vector(log2ceil(GROUNDBLOCKSIZE)-1 downto 0);
+    signal addr_g : t_slv_v(0 downto 0)(log2ceil(GROUNDBLOCKSIZE)-1
 
-    signal gactive : std_logic_vector(N_BLOCKS-1 downto 0);
-    signal RGB_grnd : t_slv_v(N_BLOCKS-1 downto 0)(5 downto 0);
+    constant Xposn : unsigned(9 downto 0) := conv_unsigned(0, 10);
+    constant Yposn : unsigned(9 downto 0) := conv_unsigned(477-32, 10);
   begin
 
 
     inst_ground_rom : entity work.rom
       generic map(
-        N_PORTS => N_BLOCKS,
+        N_PORTS => 1,
         MIF_FILENAME => "ground.mif",
         DEPTH => GROUNDBLOCKSIZE,
         WIDTH => GROUNDBLOCKSIZE*2
@@ -153,52 +152,29 @@ begin
         data => romData_g
       );
 
-    proc_rgb : process(clk_pix)
-       begin
-         if rising_edge(clk_pix) then
-           for i in N_BLOCKS-1 downto 0 loop
-             if gactive(i) = '1' then
-               RGB_ground <= RGB_grnd(i);
-             end if;
-           end loop;
-           active_ground <= or gactive;
-         end if;
-       end process proc_rgb;
+    inst_ground : entity work.drawImage
+      generic map(
+        MULTIPLICITY_X => 40,
+        MULTIPLICITY_Y => 2,
+        HEIGHT => GROUNDBLOCKSIZE,
+        WIDTH => GROUNDBLOCKSIZE,
+        PALETTE => groundPalette
+      )
+      port map(
+        clk => clk_pix,
+        sx => sx,
+        sy => sy,
+        rgb => RGB_ground,
+        vsync => vsync,
+        hsync => hsync,
+        startX => Xposn,
+        startY => Yposn,
+        address => grnd_rom_addr,
+        data => romData_g(0),
+        active => active_ground
+      );
 
-    gen_blocks : for i in N_BLOCKS-1 downto 0 generate
-      signal grnd_rom_addr : std_logic_vector(3 downto 0);--integer range 0 to GROUNDBLOCKSIZE-1;
-
-      constant Xposn : unsigned(9 downto 0) := conv_unsigned(10+i*16, 10);
-      constant Yposn : unsigned(9 downto 0) := conv_unsigned(400-16, 10);
-
-      signal RGB_lg : std_logic_vector(5 downto 0);
-    begin
-
-      inst_ground : entity work.drawImage
-        generic map(
-          HEIGHT => GROUNDBLOCKSIZE,
-          WIDTH => GROUNDBLOCKSIZE,
-          PALETTE => groundPalette
-        )
-        port map(
-          clk => clk_pix,
-          sx => sx,
-          sy => sy,
-          rgb => RGB_grnd(i),
-          vsync => vsync,
-          hsync => hsync,
-          startX => Xposn,
-          startY => Yposn,
-          address => grnd_rom_addr,
-          data => romData_g(i),
-          active => gactive(i)
-    );
-
-      addr_g(i) <= grnd_rom_addr;
-
-    end generate gen_blocks;
-
-
+    addr_g(0) <= grnd_rom_addr;
 
   end block blk_ground;
 

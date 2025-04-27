@@ -11,6 +11,7 @@ package rom_package is
   type t_slv_v is array(natural range <>) of std_logic_vector;
 
   function log2ceil(arg : positive) return natural;
+  function ite(cond : boolean; value1 : integer; value2 : integer) return integer;
 
 end package rom_package;
 
@@ -29,6 +30,15 @@ package body rom_package is
       log := log + 1;
     end loop;
     return log;
+  end function;
+
+  function ite(cond : boolean; value1 : integer; value2 : integer) return integer is
+  begin
+    if cond then
+      return value1;
+    else
+      return value2;
+    end if;
   end function;
 
 end package body rom_package;

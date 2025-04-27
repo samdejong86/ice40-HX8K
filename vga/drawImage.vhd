@@ -9,6 +9,8 @@ use work.rom_package.all;
 
 entity drawImage is
   generic (
+    MULTIPLICITY_X : integer := 1;
+    MULTIPLICITY_Y : integer := 1;
     HEIGHT : integer := 16;
     WIDTH : integer := 12;
     PALETTE : t_slv_v
@@ -46,8 +48,8 @@ architecture behavioral of drawImage is
 
 begin
 
-  endX   <= conv_unsigned(startX+width+1,10);
-  endY   <= conv_unsigned(startY+height+1,10);
+  endX   <= conv_unsigned(startX+width*MULTIPLICITY_X+1,10);
+  endY   <= conv_unsigned(startY+height*MULTIPLICITY_Y+1+1,10);
 
   proc_draw : process(clk)
     variable pixel : std_logic_vector(1 downto 0);
@@ -98,7 +100,7 @@ begin
             when LINEDONE =>
               active <= '0';
               if hsync = '0' then
-                if counter_y = HEIGHT-1 then
+                if counter_y = HEIGHT*MULTIPLICITY_Y-1 then
                   state <= DONE;
                 else
                   counter_y := counter_y +1;
