@@ -8,7 +8,10 @@ PROJ = vga_top
 PINS = iceFUN.pcf
 
 # VHDL files in dependancy order
-VHDL=simple_480p.vhd
+VHDL=rom_package.vhd
+VHDL+=rom.vhd
+VHDL+=simple_480p.vhd
+VHDL+=drawImage.vhd
 VHDL+=pll.vhd
 VHDL+=vga_top.vhd
 
@@ -21,14 +24,14 @@ MODULE=-m ghdl
 
 
 %.ghd: %.vhd
-	ghdl -a -fsynopsys  $(basename $@).vhd
+	ghdl -a --std=08 -fsynopsys  $(basename $@).vhd
 
 all: icePack
 
 
 # synthesize using Yosys
 synthesis: $(GHDL)
-	yosys $(MODULE) -p 'ghdl -fsynopsys $(PROJ); synth_ice40 -json $(PROJ).json'
+	yosys $(MODULE) -p 'ghdl --std=08 -fsynopsys $(PROJ); synth_ice40 -json $(PROJ).json'
 
 # Place and route using nextpnr
 pnr: synthesis
