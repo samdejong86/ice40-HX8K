@@ -8,10 +8,11 @@ PROJ = jumpbox_top
 PINS = iceFUN.pcf
 
 # VHDL files in dependancy order
-VHDL=jumpbox_package.vhd
+VHDL=useful_package.vhd
+#VHDL=jumpbox_package.vhd
 VHDL+=move_1D.vhd
 VHDL+=lfsr.vhd
-VHDL+=rom.vhd
+#VHDL+=rom.vhd
 VHDL+=simple_480p.vhd
 VHDL+=pll.vhd
 VHDL+=jumpbox_top.vhd

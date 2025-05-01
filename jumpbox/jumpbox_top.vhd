@@ -4,7 +4,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.Numeric_Std.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-use work.jumpbox_package.all;
+use work.useful_package.all;
 
 entity jumpbox_top is
   port(
@@ -71,21 +71,24 @@ architecture behavioral of jumpbox_top is
 
   signal jumpBox : std_logic;
   signal jumpBox_colour : std_logic_vector(5 downto 0) := "111111"; --#FFFFFF
-  signal jumpBox_x : unsigned(9 downto 0);-- := to_unsigned(500, 10);
-  signal jumpBox_y : unsigned(9 downto 0);-- := to_unsigned(431, 10);
+  signal jumpBox_x : unsigned(9 downto 0);
+  signal jumpBox_y : unsigned(9 downto 0);
   constant jumpbox_width : integer := 16;
   constant jumpbox_height : integer := 16;
 
   constant levelWidth : integer := screen_width/16;
   constant levelHeight : integer := screen_height/16 -2;
   signal platforms : std_logic;
-  signal platformData : t_slv_v(levelHeight-1 downto 0)(levelWidth -1 downto 0);
-  signal platformData_r : t_slv_v(levelWidth-1 downto 0)(levelHeight -1 downto 0);
-  constant platform_colour : std_logic_vector(5 downto 0) := "001100";
+
+
+  constant platformData : t_slv_v(levelHeight-1 downto 0)(levelWidth -1 downto 0) := init_mem("level.mif", levelHeight, levelWidth);
+  constant platformData_r : t_slv_v(levelWidth-1 downto 0)(levelHeight -1 downto 0) := rotate_2d_vector(platformData);
+  constant platform_colour : std_logic_vector(5 downto 0) := "001100"; --#00FF00
 
   type t_jumpState is (IDLE, JUMPING, FALLING);
   signal jumpState : t_jumpState := IDLE;
 
+  signal rando : std_logic;
 
 
 begin
@@ -129,19 +132,6 @@ begin
 
   begin
 
-    inst_level_rom : entity work.rom
-      generic map(
-        N_PORTS => 1,
-        MIF_FILENAME => "level.mif",
-        DEPTH => levelHeight,
-        WIDTH => levelWidth
-      )
-      port map(
-        address(0) => (others => '0'),
-        allData => platformData
-      );
-
-    platformData_r <= rotate_2d_vector(platformData);
     --platforms
     proc_platforms : process(clk_pix)
       variable tmp_y : std_logic_vector(9 downto 0);
@@ -227,8 +217,8 @@ begin
     begin
       if rising_edge(clk_pix) then
         if de = '1' then
-          if debug1 = '1' then
-            RGB <= debug1_colour;
+          if rando = '1' then
+            RGB <= "110101";
           elsif debug2 = '1' then
             RGB <= debug2_colour;
           elsif debug3 = '1' then
@@ -251,16 +241,27 @@ begin
     -- LFSR: use to generate pseudo random numbers
     blk_LFSR : block
       signal lfsr_en : std_logic;
-      signal lfsr_data : std_logic_vector(5 downto 0);
+      signal lfsr_data : std_logic_vector(19 downto 0);
+
+      type t_state_tmp is (IDLE, B1, WAITFORIT, B2);
+      signal state_tmp : t_state_tmp := IDLE;
+
+      signal count_t : integer := 0;
+
+      signal rando_x : unsigned(8 downto 0);
+      signal rando_y : unsigned(8 downto 0);
+
+      signal valid : std_logic := '0';
+
     begin
 
 
     inst_lfsr : entity work.LFSR
       generic map(
-        g_Num_Bits => 6
+        g_Num_Bits => 20
       )
       port map(
-        i_Clk => counter(22),
+        i_Clk => clk_pix,
         i_enable => '1',
         i_Seed_DV => '0',
         i_Seed_Data => (others => '0'),
@@ -268,9 +269,72 @@ begin
         o_LFSR_Done => open
      );
 
-    debug1_colour<= lfsr_data(5 downto 0);
+    --debug1_colour<= lfsr_data(5 downto 0);
+
+    proc_move_rando : process(counter(20))
+      begin
+        if rising_edge(counter(20)) then
+
+          case(state_tmp) is
+            when IDLE =>
+              valid <= '0';
+              count_t <= 0;
+              if keys(3) = '0' then
+                rando_x <= unsigned(lfsr_data(19 downto 11));
+                rando_y <= unsigned(lfsr_data(8 downto 0));
+
+                if rando_y > 463 then
+                  debug3_colour <= "110011";
+                else
+                  debug3_colour <= "111111";
+
+                end if;
+
+                --if rando_x < 639 and rando_y <479 then
+                  --try <= '0';
+                valid <= '1';
+                state_tmp <= B1;
+                --else
+                --  try <= '1';
+                -- state_tmp <= IDLE;
+                --end if;
+
+              else
+                state_tmp <= IDLE;
+              end if;
+
+            when B1 =>
+              if keys(3) = '1' then
+                state_tmp <= WAITFORIT;
+              else
+                state_tmp <= B1;
+              end if;
+
+            when WAITFORIT =>
+              if keys(3) = '0' then
+                valid <= '0';
+                state_tmp <= B2;
+              else
+                state_tmp <= WAITFORIT;
+              end if;
+
+            when B2 =>
+              if keys(3) = '1' then
+                state_tmp <= IDLE;
+              else
+                state_tmp <= B2;
+              end if;
 
 
+
+          end case;
+
+
+        end if;
+      end process proc_move_rando;
+
+      rando <= '1' when unsigned(sx) >= rando_x and unsigned(sx) < rando_x+16 and unsigned(sy) > rando_y  and unsigned(sy) < rando_y+16 and valid = '1' else
+               '0';
     end block blk_lfsr;
 
 

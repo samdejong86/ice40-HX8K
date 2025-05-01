@@ -4,7 +4,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use IEEE.Numeric_Std.ALL;
 
-use work.jumpbox_package.all;
+use work.useful_package.all;
 
 entity move_1D is
   generic(
