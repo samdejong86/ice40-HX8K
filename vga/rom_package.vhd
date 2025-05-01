@@ -12,6 +12,7 @@ package rom_package is
 
   function log2ceil(arg : positive) return natural;
   function ite(cond : boolean; value1 : integer; value2 : integer) return integer;
+  function reverse_any_vector (a: in std_logic_vector) return std_logic_vector;
 
 end package rom_package;
 
@@ -40,5 +41,17 @@ package body rom_package is
       return value2;
     end if;
   end function;
+
+
+  function reverse_any_vector (a: in std_logic_vector) return std_logic_vector is
+    variable result: std_logic_vector(a'RANGE);
+    alias aa: std_logic_vector(a'REVERSE_RANGE) is a;
+  begin
+    for i in aa'RANGE loop
+      result(i) := aa(i);
+    end loop;
+    return result;
+  end;
+
 
 end package body rom_package;

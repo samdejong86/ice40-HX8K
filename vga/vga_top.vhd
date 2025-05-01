@@ -56,6 +56,8 @@ architecture behavioral of vga_top is
   signal RGB : std_logic_vector(5 downto 0);
   signal RGB_l2 : std_logic_vector(5 downto 0);
 
+  signal RGB_mw : std_logic_vector(5 downto 0);
+  signal active_mw : std_logic;
 
   signal RGB_ground : std_logic_vector(5 downto 0);
   signal active_ground : std_logic;
@@ -85,6 +87,7 @@ architecture behavioral of vga_top is
 
   signal marioData2 : std_logic_vector(DATA_WIDTH -1 downto 0);
   signal mario_rom_Addr2 : std_logic_vector(log2ceil(MEM_DEPTH)-1 downto 0);--integer range 0 to MEM_DEPTH - 1;
+
 
 
 begin
@@ -133,7 +136,7 @@ begin
 
     signal romData_g : t_slv_v(0 downto 0)(GROUNDBLOCKSIZE*2-1 downto 0);
     signal grnd_rom_addr : std_logic_vector(log2ceil(GROUNDBLOCKSIZE)-1 downto 0);
-    signal addr_g : t_slv_v(0 downto 0)(log2ceil(GROUNDBLOCKSIZE)-1
+    signal addr_g : t_slv_v(0 downto 0)(log2ceil(GROUNDBLOCKSIZE)-1 downto 0);
 
     constant Xposn : unsigned(9 downto 0) := conv_unsigned(0, 10);
     constant Yposn : unsigned(9 downto 0) := conv_unsigned(477-32, 10);
@@ -242,19 +245,97 @@ begin
       active => mactive2
     );
 
+  blk_walk : block
+
+    signal w_startX : unsigned(9 downto 0) := conv_unsigned(200, 10);
+    signal w_startY : unsigned(9 downto 0) := conv_unsigned(100, 10);
 
 
+    signal wromData : t_slv_v(0 downto 0)(32 -1 downto 0);
+    signal waddr : t_slv_v(0 downto 0)(log2ceil(MEM_DEPTH*3)-1 downto 0);
 
+    signal wmario_rom_Addr : std_logic_vector(log2ceil(16)-1 downto 0);
+
+    signal wmarioData : std_logic_vector(32 -1 downto 0);
+    signal wmarioDatabw : std_logic_vector(32 -1 downto 0);
+
+    signal stepCount : integer range 0 to 2 := 0;
+  begin
+
+
+    inst_mario_walk_rom : entity work.rom
+     generic map(
+       N_PORTS => 1,
+       MIF_FILENAME => "marioWalk.mif",
+       DEPTH => MEM_DEPTH*3,
+       WIDTH => 32
+     )
+     port map(
+       address => waddr,
+       data => wromData
+     );
+
+    inst_mario_walk : entity work.drawImage
+    generic map(
+      HEIGHT => 16,
+      WIDTH => 16,
+      PALETTE => marioPalette
+    )
+    port map(
+      clk => clk_pix,
+      sx => sx,
+      sy => sy,
+      rgb => RGB_mw,
+      vsync => vsync,
+      hsync => hsync,
+      startX => w_startX,
+      startY => w_startY,
+      address => wmario_rom_Addr,
+      data => wmarioData,
+      active => active_mw
+    );
+
+
+    --wmarioData <= wromData(0);
+
+    gen: for i in 0 to 15 generate
+      wmarioData(2*(i+1)-1 downto 2*i) <= wromData(0)(2*(i+1)-1 downto 2*i) when keys(0)='1' else wromData(0)(31-2*i downto 31-2*(i+1)+1);
+    end generate;
+
+    --gen: for i in 0 to 31 generate
+    --  wmarioData(i) <= wromData(0)(i) when keys(0)='1' else wromData(0)(31-i);
+    --end generate;
+
+
+    waddr(0) <= ("00" & (unsigned(wmario_rom_Addr(log2ceil(16) -1 downto 0)))) + stepCount*16;
+
+
+    --implement a direction swap of wromData(0) when a key is pushed?
+
+    proc_step_counter : process(counter(20))
+      begin
+        if rising_edge(counter(20)) then
+          if keys(0) = '1' then
+            w_startX <= w_startX + 2;
+          else
+            w_startX <= w_startX - 2;
+          end if;
+
+          stepCount <= stepCount + 1;
+          if stepCount = 2 then
+            stepCount <= 0;
+          end if;
+        end if;
+      end process proc_step_counter;
+
+  end block blk_walk;
 
   --RGB <= RGB_l when de = '1' else
   --       "000000";
 
-
-
-
-
   square <= '1' when (unsigned(sx) > 220 and unsigned(sx) < 420) and (unsigned(sy) > 140 and unsigned(sy) < 340) else
             '0';
+
 
 
   proc_draw : process(clk_pix)
@@ -266,8 +347,8 @@ begin
 
           elsif mactive = '1' then
             RGB <= RGB_l;
-          elsif mactive2 = '1' then
-            RGB <= RGB_l2;
+          elsif active_mw = '1' then
+            RGB <= RGB_mw;
           elsif square = '1' then
             RGB <= "100001";
           else

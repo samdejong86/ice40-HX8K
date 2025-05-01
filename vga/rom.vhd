@@ -39,17 +39,6 @@ architecture behavioral of rom is
     return temp_mem;
   end function;
 
-  function reverse_any_vector (a: in std_logic_vector) return std_logic_vector is
-    variable result: std_logic_vector(a'RANGE);
-    alias aa: std_logic_vector(a'REVERSE_RANGE) is a;
-  begin
-    for i in aa'RANGE loop
-      result(i) := aa(i);
-    end loop;
-    return result;
-  end;
-
-
   constant data_l : mem_type := init_mem(MIF_FILENAME);
 
 begin
