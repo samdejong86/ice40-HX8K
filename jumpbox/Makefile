@@ -13,6 +13,7 @@ VHDL=useful_package.vhd
 VHDL+=move_1D.vhd
 VHDL+=lfsr.vhd
 #VHDL+=rom.vhd
+VHDL+=drawImage.vhd
 VHDL+=simple_480p.vhd
 VHDL+=pll.vhd
 VHDL+=jumpbox_top.vhd

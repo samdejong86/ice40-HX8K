@@ -29,7 +29,7 @@ architecture behavioral of jumpbox_top is
   constant screen_height : integer := 480;
 
 
-  constant background : std_logic_vector(5 downto 0) :="000000"; --#000000
+  constant background : std_logic_vector(5 downto 0) :="001011"; --#00aaff
   signal counter : unsigned(31 downto 0) := (others => '0');
 
 
@@ -66,7 +66,7 @@ architecture behavioral of jumpbox_top is
 
 
   signal floor : std_logic;
-  constant floor_colour : std_logic_vector(5 downto 0) := "010000"; --#550000
+  signal floor_colour : std_logic_vector(5 downto 0) := "010000"; --#550000
   constant floor_level : integer := screen_height-1 - 32;
 
   signal jumpBox : std_logic;
@@ -116,8 +116,26 @@ begin
       de => de
     );
 
-  vga_vsync <= vsync;
-  vga_hsync <= hsync;
+  blk_sync_dly : block
+    signal vs : std_logic_vector(1 downto 0);
+    signal hs : std_logic_vector(1 downto 0);
+
+  begin
+
+  proc_dly_sync : process(clk_pix)
+  begin
+    if rising_edge(clk_pix) then
+      vga_vsync <= vs(1);
+      vga_hsync <= hs(1);
+      vs(1) <= vs(0);
+      hs(1) <= hs(0);
+      vs(0) <= vsync;
+      hs(0) <= hsync;
+    end if;
+  end process proc_dly_sync;
+
+  end block blk_sync_dly;
+
 
   inst_pll : entity work.pll
     port map(
@@ -140,14 +158,14 @@ begin
         if rising_edge(clk_pix) then
 
           if unsigned(sy) < floor_level then
-          tmp_y := (sy srl 4);
-          tmp_x := (sx srl 4);
+            tmp_y := (sy srl 4);
+            tmp_x := (sx srl 4);
 
-          if platformData(to_integer(unsigned(tmp_y)))(to_integer(unsigned(tmp_x))) = '1' then
-            platforms <='1';
-          else
-            platforms <= '0';
-          end if;
+            if platformData(to_integer(unsigned(tmp_y)))(to_integer(unsigned(tmp_x))) = '1' then
+              platforms <='1';
+            else
+              platforms <= '0';
+            end if;
 
           end if;
 
@@ -203,14 +221,69 @@ begin
   debug3 <= '1' when (unsigned(sx) > 20 and unsigned(sx) < 30) and (unsigned(sy) > 100  and unsigned(sy) < 110) else
            '0';
 
-  jumpBox <= '1' when (unsigned(sx) > jumpBox_x and unsigned(sx) < jumpBox_x + jumpbox_width) and (unsigned(sy) > jumpBox_y  and unsigned(sy) < jumpBox_y + jumpbox_height) else
-             '0';
+  blk_jumbox_draw : block
+
+    constant jumpPalette : t_slv_v(0 to 3)(5 downto 0) := ("100001", --aa0055
+                                                           "001001", --00aa55
+                                                           "000111", --0055ff
+                                                           "000000"); --000000
 
 
-  floor <= '1' when (unsigned(sx) >= 0 and unsigned(sx) < screen_width-1) and (unsigned(sy) > floor_level  and unsigned(sy) < screen_height-1) else
-           '0';
+  begin
+
+  inst_jumpDraw : entity work.drawImage
+    generic map(
+      HEIGHT => 16,
+      WIDTH => 16,
+      FILENAME => "jumpbox.mif",
+      PALETTE => jumpPalette,
+      TRANSPARENT => 3
+    )
+    port map(
+      clk => clk_pix,
+      sx => sx,
+      sy => sy,
+      rgb => jumpBox_colour,
+      vsync => vsync,
+      hsync => hsync,
+      active => jumpBox,
+      startX => jumpBox_x,
+      startY => jumpBox_y
+    );
+
+  end block blk_jumbox_draw;
 
 
+  blk_draw_floor : block
+    constant bricksPalette : t_slv_v(0 to 1)(5 downto 0) := ("100000", --aa0000
+                                                             "000000");--000000
+
+
+  begin
+
+
+    inst_floorDraw : entity work.drawImage
+    generic map(
+      HEIGHT => 16,
+      WIDTH => 16,
+      FILENAME => "bricks.mif",
+      PALETTE => bricksPalette,
+      MULTIPLICITY_X => levelWidth,
+      MULTIPLICITY_Y => 2
+    )
+    port map(
+      clk => clk_pix,
+      sx => sx,
+      sy => sy,
+      rgb => floor_colour,
+      vsync => vsync,
+      hsync => hsync,
+      active => floor,
+      startX => (others => '0'),
+      startY => to_unsigned(floor_level,10)
+    );
+
+  end block blk_draw_floor;
 
 
   proc_draw : process(clk_pix)
