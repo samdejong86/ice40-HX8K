@@ -83,13 +83,17 @@ architecture behavioral of jumpbox_top is
 
   constant platformData : t_slv_v(levelHeight-1 downto 0)(levelWidth -1 downto 0) := init_mem("level.mif", levelHeight, levelWidth);
   constant platformData_r : t_slv_v(levelWidth-1 downto 0)(levelHeight -1 downto 0) := rotate_2d_vector(platformData);
-  constant platform_colour : std_logic_vector(5 downto 0) := "001100"; --#00FF00
+  signal platform_colour : std_logic_vector(5 downto 0) := "001100"; --#00FF00
 
   type t_jumpState is (IDLE, JUMPING, FALLING);
   signal jumpState : t_jumpState := IDLE;
 
   signal rando : std_logic;
 
+  signal duke : std_logic;
+  signal dukecolour : std_logic_vector(5 downto 0);
+
+  signal stopFall : std_logic := '0';
 
 begin
 
@@ -148,6 +152,9 @@ begin
   blk_level : block
 
 
+    constant blockPalette : t_slv_v(0 to 2)(5 downto 0) := ("111010", --ffaaaa
+                                                            "100100", --aa5500
+                                                            "000000");--000000
   begin
 
     --platforms
@@ -172,6 +179,23 @@ begin
 
         end if;
       end process proc_platforms;
+
+
+      inst_draw_block : entity work.drawStaticImage
+        generic map(
+          FILENAME=>"block.mif",
+          PALETTE=>blockPalette,
+          HEIGHT=>16,
+          WIDTH=>16
+        )
+        port map(
+          clk => clk_pix,
+          sx =>sx,
+          sy => sy,
+          rgb => platform_colour,
+          active => platforms
+        );
+
 
 
   end block blk_level;
@@ -206,9 +230,9 @@ begin
       rst => rst_pix,
       forward => keys(2),
       pos => jumpbox_y,
+      stopFall => stopFall,
       pos_perp => jumpbox_x,
-      platformData => platformData_r,
-      debugcolor => debug2_colour
+      platformData => platformData_r
     );
 
 
@@ -223,35 +247,83 @@ begin
 
   blk_jumbox_draw : block
 
-    constant jumpPalette : t_slv_v(0 to 3)(5 downto 0) := ("100001", --aa0055
-                                                           "001001", --00aa55
-                                                           "000111", --0055ff
-                                                           "000000"); --000000
+    constant conePalette : t_slv_v(0 to 3)(5 downto 0) := ("111111", --ffffff
+                                                           "111000", --ffaa00
+                                                           "101010", --aaaaaa
+                                                           "000000");--000000
+
+    signal jumpBox_l : std_logic;
+  begin
+
+    inst_draw_block : entity work.drawStaticImage
+      generic map(
+        HEIGHT=>16,
+        WIDTH=>16,
+        FILENAME => "cone.mif",
+        PALETTE => conePalette,
+        TRANSPARENT => 2,
+        OFFSET=>false
+      )
+      port map(
+        clk => clk_pix,
+        sx =>sx,
+        sy => sy,
+        rgb => jumpBox_colour,
+        active => jumpBox_l,
+        active_o => jumpBox
+      );
+
+    jumpBox_l <= '1' when (unsigned(sx) > jumpBox_x and unsigned(sx) <= jumpBox_x+16) and (unsigned(sy) > jumpBox_y  and unsigned(sy) <= jumpBox_y+16) else
+                 '0';
+
+
+
+  end block blk_jumbox_draw;
+
+
+  blk_duke : block
+
+    constant statuePalette : t_slv_v(0 to 2)(5 downto 0) := ("110000", --ff0000
+                                                             "101010", --aaaaaa
+                                                             "000000");--000000
+    signal duke_l : std_logic;
+
+
+    constant statue_x : unsigned(9 downto 0) := to_unsigned(10*16,10);
+    constant statue_y : unsigned(9 downto 0) := to_unsigned(7*16-44+2,10);
 
 
   begin
 
-  inst_jumpDraw : entity work.drawImage
-    generic map(
-      HEIGHT => 16,
-      WIDTH => 16,
-      FILENAME => "jumpbox.mif",
-      PALETTE => jumpPalette,
-      TRANSPARENT => 3
-    )
-    port map(
-      clk => clk_pix,
-      sx => sx,
-      sy => sy,
-      rgb => jumpBox_colour,
-      vsync => vsync,
-      hsync => hsync,
-      active => jumpBox,
-      startX => jumpBox_x,
-      startY => jumpBox_y
-    );
+      inst_draw_block : entity work.drawStaticImage
+      generic map(
+        HEIGHT => 44,
+        WIDTH => 29,
+        FILENAME => "statue.mif",
+        PALETTE => statuePalette,
+        TRANSPARENT => 0,
+        OFFSET=>false
+      )
+      port map(
+        clk => clk_pix,
+        sx =>sx,
+        sy => sy,
+        rgb => dukecolour,
+        active => duke_l,
+        active_o => duke
+      );
 
-  end block blk_jumbox_draw;
+      duke_l <= '1' when (unsigned(sx) > statue_x and unsigned(sx) <= statue_x+29) and (unsigned(sy) > statue_y and unsigned(sy) <= statue_y+44) else
+           '0';
+
+
+
+      stopfall <= '1' when (jumpBox_x +16 > statue_x+13 and jumpBox_x <= statue_x + 19) and jumpBox_y + 16 = statue_y + 4 else
+                  '0';
+
+  end block blk_duke;
+
+
 
 
   blk_draw_floor : block
@@ -261,27 +333,28 @@ begin
 
   begin
 
+    inst_draw_block : entity work.drawStaticImage
+      generic map(
+        FILENAME=>"bricks.mif",
+        PALETTE=>bricksPalette,
+        HEIGHT=>16,
+        WIDTH=>16,
+        OFFSET=>false
+      )
+      port map(
+        clk => clk_pix,
+        sx =>sx,
+        sy => sy,
+        rgb => floor_colour,
+        active => floor
+      );
 
-    inst_floorDraw : entity work.drawImage
-    generic map(
-      HEIGHT => 16,
-      WIDTH => 16,
-      FILENAME => "bricks.mif",
-      PALETTE => bricksPalette,
-      MULTIPLICITY_X => levelWidth,
-      MULTIPLICITY_Y => 2
-    )
-    port map(
-      clk => clk_pix,
-      sx => sx,
-      sy => sy,
-      rgb => floor_colour,
-      vsync => vsync,
-      hsync => hsync,
-      active => floor,
-      startX => (others => '0'),
-      startY => to_unsigned(floor_level,10)
-    );
+
+    floor <= '1' when (unsigned(sx) > 0 and unsigned(sx) <= 639) and (unsigned(sy) > floor_level  and unsigned(sy) <= 479) else
+             '0';
+
+
+
 
   end block blk_draw_floor;
 
@@ -298,6 +371,8 @@ begin
             RGB <= debug3_colour;
           elsif jumpBox = '1' then
             RGB <= jumpBox_colour;
+          elsif duke = '1' then
+            RGB <= dukecolour;
           elsif platforms = '1' then
             RGB <= platform_colour;
           elsif floor = '1' then
@@ -312,103 +387,103 @@ begin
     end process proc_draw;
 
     -- LFSR: use to generate pseudo random numbers
-    blk_LFSR : block
-      signal lfsr_en : std_logic;
-      signal lfsr_data : std_logic_vector(19 downto 0);
+    -- blk_LFSR : block
+    --   signal lfsr_en : std_logic;
+    --   signal lfsr_data : std_logic_vector(19 downto 0);
 
-      type t_state_tmp is (IDLE, B1, WAITFORIT, B2);
-      signal state_tmp : t_state_tmp := IDLE;
+    --   type t_state_tmp is (IDLE, B1, WAITFORIT, B2);
+    --   signal state_tmp : t_state_tmp := IDLE;
 
-      signal count_t : integer := 0;
+    --   signal count_t : integer := 0;
 
-      signal rando_x : unsigned(8 downto 0);
-      signal rando_y : unsigned(8 downto 0);
+    --   signal rando_x : unsigned(8 downto 0);
+    --   signal rando_y : unsigned(8 downto 0);
 
-      signal valid : std_logic := '0';
+    --   signal valid : std_logic := '0';
 
-    begin
-
-
-    inst_lfsr : entity work.LFSR
-      generic map(
-        g_Num_Bits => 20
-      )
-      port map(
-        i_Clk => clk_pix,
-        i_enable => '1',
-        i_Seed_DV => '0',
-        i_Seed_Data => (others => '0'),
-        o_LFSR_Data => lfsr_data,
-        o_LFSR_Done => open
-     );
-
-    --debug1_colour<= lfsr_data(5 downto 0);
-
-    proc_move_rando : process(counter(20))
-      begin
-        if rising_edge(counter(20)) then
-
-          case(state_tmp) is
-            when IDLE =>
-              valid <= '0';
-              count_t <= 0;
-              if keys(3) = '0' then
-                rando_x <= unsigned(lfsr_data(19 downto 11));
-                rando_y <= unsigned(lfsr_data(8 downto 0));
-
-                if rando_y > 463 then
-                  debug3_colour <= "110011";
-                else
-                  debug3_colour <= "111111";
-
-                end if;
-
-                --if rando_x < 639 and rando_y <479 then
-                  --try <= '0';
-                valid <= '1';
-                state_tmp <= B1;
-                --else
-                --  try <= '1';
-                -- state_tmp <= IDLE;
-                --end if;
-
-              else
-                state_tmp <= IDLE;
-              end if;
-
-            when B1 =>
-              if keys(3) = '1' then
-                state_tmp <= WAITFORIT;
-              else
-                state_tmp <= B1;
-              end if;
-
-            when WAITFORIT =>
-              if keys(3) = '0' then
-                valid <= '0';
-                state_tmp <= B2;
-              else
-                state_tmp <= WAITFORIT;
-              end if;
-
-            when B2 =>
-              if keys(3) = '1' then
-                state_tmp <= IDLE;
-              else
-                state_tmp <= B2;
-              end if;
+    -- begin
 
 
+    -- inst_lfsr : entity work.LFSR
+    --   generic map(
+    --     g_Num_Bits => 20
+    --   )
+    --   port map(
+    --     i_Clk => clk_pix,
+    --     i_enable => '1',
+    --     i_Seed_DV => '0',
+    --     i_Seed_Data => (others => '0'),
+    --     o_LFSR_Data => lfsr_data,
+    --     o_LFSR_Done => open
+    --  );
 
-          end case;
+    -- --debug1_colour<= lfsr_data(5 downto 0);
+
+    -- proc_move_rando : process(counter(20))
+    --   begin
+    --     if rising_edge(counter(20)) then
+
+    --       case(state_tmp) is
+    --         when IDLE =>
+    --           valid <= '0';
+    --           count_t <= 0;
+    --           if keys(3) = '0' then
+    --             rando_x <= unsigned(lfsr_data(19 downto 11));
+    --             rando_y <= unsigned(lfsr_data(8 downto 0));
+
+    --             if rando_y > 463 then
+    --               debug3_colour <= "110011";
+    --             else
+    --               debug3_colour <= "111111";
+
+    --             end if;
+
+    --             --if rando_x < 639 and rando_y <479 then
+    --               --try <= '0';
+    --             valid <= '1';
+    --             state_tmp <= B1;
+    --             --else
+    --             --  try <= '1';
+    --             -- state_tmp <= IDLE;
+    --             --end if;
+
+    --           else
+    --             state_tmp <= IDLE;
+    --           end if;
+
+    --         when B1 =>
+    --           if keys(3) = '1' then
+    --             state_tmp <= WAITFORIT;
+    --           else
+    --             state_tmp <= B1;
+    --           end if;
+
+    --         when WAITFORIT =>
+    --           if keys(3) = '0' then
+    --             valid <= '0';
+    --             state_tmp <= B2;
+    --           else
+    --             state_tmp <= WAITFORIT;
+    --           end if;
+
+    --         when B2 =>
+    --           if keys(3) = '1' then
+    --             state_tmp <= IDLE;
+    --           else
+    --             state_tmp <= B2;
+    --           end if;
 
 
-        end if;
-      end process proc_move_rando;
 
-      rando <= '1' when unsigned(sx) >= rando_x and unsigned(sx) < rando_x+16 and unsigned(sy) > rando_y  and unsigned(sy) < rando_y+16 and valid = '1' else
-               '0';
-    end block blk_lfsr;
+    --       end case;
+
+
+    --     end if;
+    --   end process proc_move_rando;
+
+    --   rando <= '1' when unsigned(sx) >= rando_x and unsigned(sx) < rando_x+16 and unsigned(sy) > rando_y  and unsigned(sy) < rando_y+16 and valid = '1' else
+    --            '0';
+    -- end block blk_lfsr;
 
 
 

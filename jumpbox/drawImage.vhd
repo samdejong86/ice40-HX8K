@@ -25,9 +25,6 @@ entity drawImage is
 
     rgb : out std_logic_vector(5 downto 0);
 
-    vsync : in std_logic;
-    hsync : in std_logic;
-
     active : out std_logic;
 
     startX : in unsigned(9 downto 0);
@@ -65,7 +62,7 @@ begin
 
     begin
       if rising_edge(clk) then
-        if vsync = '0' then
+        if sy = x"01E0" then
           pixel := (others => '0');
           counter_x := 0;
           counter_y := 0;
@@ -109,7 +106,8 @@ begin
 
             when LINEDONE =>
               active <= '0';
-              if hsync = '0' then
+
+              if sx = x"0288" then
                 if counter_y = HEIGHT*MULTIPLICITY_Y-1 then
                   state <= DONE;
                 else

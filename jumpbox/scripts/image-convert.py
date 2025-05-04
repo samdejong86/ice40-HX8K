@@ -1,6 +1,10 @@
+#!/usr/bin/env python
 from PIL import Image
 import argparse
 import numpy as np
+
+# Todo:
+# get closest colours before generating .mif file since that might reduce the number of colours
 
 
 def hex_to_rgb(colour_hex):
@@ -91,11 +95,11 @@ for i in range(width):
 
 outfilename = args.filename.rsplit( ".", 1 )[ 0 ]+".mif"
 
-#nColours=len(new_colours)
+nColours=len(new_colours)
+
 binary = bin(len(new_colours)-1)[2:]
 
-colourWidth="{0:0"+binary+"b}"
-
+colourWidth="{0:0"+str(len(binary))+"b}"
 
 
 data=""
