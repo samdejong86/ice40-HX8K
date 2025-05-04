@@ -253,13 +253,21 @@ begin
                                                            "000000");--000000
 
     signal jumpBox_l : std_logic;
+
+    signal startindex : integer := 0;
+
+    signal local_counter : integer range 0 to 3 := 0;
+
+    signal mirror : std_logic;
+
   begin
 
     inst_draw_block : entity work.drawStaticImage
       generic map(
-        HEIGHT=>16,
+        ACTIVEHEIGHT=>16,
+        HEIGHT=>64,
         WIDTH=>16,
-        FILENAME => "cone.mif",
+        FILENAME => "conewalk.mif",
         PALETTE => conePalette,
         TRANSPARENT => 2,
         OFFSET=>false
@@ -268,14 +276,38 @@ begin
         clk => clk_pix,
         sx =>sx,
         sy => sy,
+        mirror => not keys(0),
+        startIndex=> startindex,
         rgb => jumpBox_colour,
         active => jumpBox_l,
         active_o => jumpBox
       );
 
+
+
     jumpBox_l <= '1' when (unsigned(sx) > jumpBox_x and unsigned(sx) <= jumpBox_x+16) and (unsigned(sy) > jumpBox_y  and unsigned(sy) <= jumpBox_y+16) else
                  '0';
 
+    -- when keys(0) or keys(1) is pressed, startindex should cycle through 16,
+    -- 32, 48
+    startindex <= local_counter * 16;
+
+    proc_walk : process(counter(20))
+      begin
+        if rising_edge(counter(20)) then
+          if keys(1) = '1' and keys(0) = '1' then
+            --startindex <= 0;
+            local_counter <= 0;
+          else
+            if local_counter = 3 then
+              local_counter <= 1;
+            else
+              local_counter <= local_counter+1;
+            end if;
+          end if;
+
+        end if;
+      end process proc_walk;
 
 
   end block blk_jumbox_draw;
@@ -297,6 +329,7 @@ begin
 
       inst_draw_block : entity work.drawStaticImage
       generic map(
+        ACTIVEHEIGHT=>44,
         HEIGHT => 44,
         WIDTH => 29,
         FILENAME => "statue.mif",
