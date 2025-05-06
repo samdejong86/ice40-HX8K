@@ -9,6 +9,7 @@ PINS = iceFUN.pcf
 
 # VHDL files in dependancy order
 VHDL=useful_package.vhd
+VHDL=palettes.vhd
 #VHDL=jumpbox_package.vhd
 VHDL+=move_1D.vhd
 VHDL+=lfsr.vhd

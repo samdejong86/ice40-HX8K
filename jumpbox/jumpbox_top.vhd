@@ -1,10 +1,10 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
---use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.Numeric_Std.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 use work.useful_package.all;
+use work.palettes.all;
 
 entity jumpbox_top is
   port(
@@ -25,11 +25,7 @@ end entity jumpbox_top;
 
 architecture behavioral of jumpbox_top is
 
-  constant screen_width  : integer := 640;
-  constant screen_height : integer := 480;
 
-
-  constant background : std_logic_vector(5 downto 0) :="001011"; --#00aaff
   signal counter : unsigned(31 downto 0) := (others => '0');
 
 
@@ -67,22 +63,15 @@ architecture behavioral of jumpbox_top is
 
   signal floor : std_logic;
   signal floor_colour : std_logic_vector(5 downto 0) := "010000"; --#550000
-  constant floor_level : integer := screen_height-1 - 32;
 
   signal jumpBox : std_logic;
   signal jumpBox_colour : std_logic_vector(5 downto 0) := "111111"; --#FFFFFF
   signal jumpBox_x : unsigned(9 downto 0);
   signal jumpBox_y : unsigned(9 downto 0);
-  constant jumpbox_width : integer := 16;
-  constant jumpbox_height : integer := 16;
 
-  constant levelWidth : integer := screen_width/16;
-  constant levelHeight : integer := screen_height/16 -2;
   signal platforms : std_logic;
 
 
-  constant platformData : t_slv_v(levelHeight-1 downto 0)(levelWidth -1 downto 0) := init_mem("level.mif", levelHeight, levelWidth);
-  constant platformData_r : t_slv_v(levelWidth-1 downto 0)(levelHeight -1 downto 0) := rotate_2d_vector(platformData);
   signal platform_colour : std_logic_vector(5 downto 0) := "001100"; --#00FF00
 
   type t_jumpState is (IDLE, JUMPING, FALLING);
@@ -149,14 +138,6 @@ begin
       );
 
 
-  blk_level : block
-
-
-    constant blockPalette : t_slv_v(0 to 2)(5 downto 0) := ("111010", --ffaaaa
-                                                            "100100", --aa5500
-                                                            "000000");--000000
-  begin
-
     --platforms
     proc_platforms : process(clk_pix)
       variable tmp_y : std_logic_vector(9 downto 0);
@@ -181,7 +162,7 @@ begin
       end process proc_platforms;
 
 
-      inst_draw_block : entity work.drawStaticImage
+      inst_draw_platforms : entity work.drawStaticImage
         generic map(
           FILENAME=>"block.mif",
           PALETTE=>blockPalette,
@@ -196,9 +177,6 @@ begin
           active => platforms
         );
 
-
-
-  end block blk_level;
 
 
   inst_move_x : entity work.move_1D
@@ -247,10 +225,6 @@ begin
 
   blk_jumbox_draw : block
 
-    constant conePalette : t_slv_v(0 to 3)(5 downto 0) := ("111111", --ffffff
-                                                           "111000", --ffaa00
-                                                           "101010", --aaaaaa
-                                                           "000000");--000000
 
     signal jumpBox_l : std_logic;
 
@@ -262,12 +236,12 @@ begin
 
   begin
 
-    inst_draw_block : entity work.drawStaticImage
+    inst_draw_cone : entity work.drawStaticImage
       generic map(
         ACTIVEHEIGHT=>16,
         HEIGHT=>64,
         WIDTH=>16,
-        FILENAME => "conewalk.mif",
+        FILENAME => "cone.mif",
         PALETTE => conePalette,
         TRANSPARENT => 2,
         OFFSET=>false
@@ -288,15 +262,12 @@ begin
     jumpBox_l <= '1' when (unsigned(sx) > jumpBox_x and unsigned(sx) <= jumpBox_x+16) and (unsigned(sy) > jumpBox_y  and unsigned(sy) <= jumpBox_y+16) else
                  '0';
 
-    -- when keys(0) or keys(1) is pressed, startindex should cycle through 16,
-    -- 32, 48
     startindex <= local_counter * 16;
 
     proc_walk : process(counter(20))
       begin
         if rising_edge(counter(20)) then
           if keys(1) = '1' and keys(0) = '1' then
-            --startindex <= 0;
             local_counter <= 0;
           else
             if local_counter = 3 then
@@ -315,26 +286,23 @@ begin
 
   blk_duke : block
 
-    constant statuePalette : t_slv_v(0 to 2)(5 downto 0) := ("110000", --ff0000
-                                                             "101010", --aaaaaa
-                                                             "000000");--000000
     signal duke_l : std_logic;
 
 
-    constant statue_x : unsigned(9 downto 0) := to_unsigned(10*16,10);
-    constant statue_y : unsigned(9 downto 0) := to_unsigned(7*16-44+2,10);
+    constant statue_x : unsigned(9 downto 0) := to_unsigned(27*16,10);
+    constant statue_y : unsigned(9 downto 0) := to_unsigned(15*16-97,10);
 
 
   begin
 
       inst_draw_block : entity work.drawStaticImage
       generic map(
-        ACTIVEHEIGHT=>44,
-        HEIGHT => 44,
-        WIDTH => 29,
+        ACTIVEHEIGHT=>97,
+        HEIGHT => 97,
+        WIDTH => 68,
         FILENAME => "statue.mif",
         PALETTE => statuePalette,
-        TRANSPARENT => 0,
+        TRANSPARENT => 1,
         OFFSET=>false
       )
       port map(
@@ -346,51 +314,41 @@ begin
         active_o => duke
       );
 
-      duke_l <= '1' when (unsigned(sx) > statue_x and unsigned(sx) <= statue_x+29) and (unsigned(sy) > statue_y and unsigned(sy) <= statue_y+44) else
+      duke_l <= '1' when (unsigned(sx) > statue_x and unsigned(sx) <= statue_x+68) and (unsigned(sy) > statue_y and unsigned(sy) <= statue_y+97) else
            '0';
 
 
 
-      stopfall <= '1' when (jumpBox_x +16 > statue_x+13 and jumpBox_x <= statue_x + 19) and jumpBox_y + 16 = statue_y + 4 else
+      stopfall <= '1' when (jumpBox_x +16 > statue_x+35 and jumpBox_x <= statue_x + 40) and jumpBox_y + 16 = statue_y + 2 else
+                  '1' when (jumpBox_x +16 > statue_x+9 and jumpBox_x <= statue_x + 61)  and jumpBox_y + 16 = statue_y + 69 else
+                  '1' when (jumpBox_x +16 > statue_x+43 and jumpBox_x <= statue_x + 65) and jumpBox_y + 16 = statue_y + 24 else
+                  '1' when (jumpBox_x +16 > statue_x+5 and jumpBox_x <= statue_x + 16) and jumpBox_y + 16 = statue_y + 11 else
+                  '1' when (jumpBox_x +16 > statue_x+20 and jumpBox_x <= statue_x + 32) and jumpBox_y + 16 = statue_y + 18 else
                   '0';
 
   end block blk_duke;
 
 
 
-
-  blk_draw_floor : block
-    constant bricksPalette : t_slv_v(0 to 1)(5 downto 0) := ("100000", --aa0000
-                                                             "000000");--000000
-
-
-  begin
-
-    inst_draw_block : entity work.drawStaticImage
-      generic map(
-        FILENAME=>"bricks.mif",
-        PALETTE=>bricksPalette,
-        HEIGHT=>16,
-        WIDTH=>16,
-        OFFSET=>false
-      )
-      port map(
-        clk => clk_pix,
-        sx =>sx,
-        sy => sy,
-        rgb => floor_colour,
-        active => floor
-      );
+  inst_draw_floor : entity work.drawStaticImage
+    generic map(
+      FILENAME=>"bricks.mif",
+      PALETTE=>bricksPalette,
+      HEIGHT=>16,
+      WIDTH=>16,
+      OFFSET=>false
+    )
+    port map(
+      clk => clk_pix,
+      sx =>sx,
+      sy => sy,
+      rgb => floor_colour,
+      active => floor
+    );
 
 
-    floor <= '1' when (unsigned(sx) > 0 and unsigned(sx) <= 639) and (unsigned(sy) > floor_level  and unsigned(sy) <= 479) else
+  floor <= '1' when (unsigned(sx) > 0 and unsigned(sx) <= 639) and (unsigned(sy) > floor_level  and unsigned(sy) <= 479) else
              '0';
-
-
-
-
-  end block blk_draw_floor;
-
 
   proc_draw : process(clk_pix)
     begin
