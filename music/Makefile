@@ -22,7 +22,8 @@ MIFGENERICS = $(foreach x,$(indicies), -gMUSIC_FILE_$(x)=$(word $(x),$(MUSICMIF)
 PINS = ../common/iceFUN.pcf
 
 # VHDL files in dependancy order
-VHDL=ledscan.vhd
+VHDL=../common/ledscan.vhd
+VHDL+=../common/useful_package.vhd
 VHDL+=led_animate.vhd
 VHDL+=note_counter.vhd
 VHDL+=play_tune.vhd
@@ -39,6 +40,7 @@ MODULE=-m ghdl
 	python songWriter.py $(basename $@).notes
 
 %.ghd: %.vhd
+	echo $(basename $@).vhd
 	ghdl -a --std=08 -fsynopsys $(basename $@).vhd
 
 all: icePack

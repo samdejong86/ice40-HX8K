@@ -1,10 +1,11 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.Numeric_Std.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 library std ;
 use std.textio.all;
 
+use work.useful_package.all;
 
 entity sineLoop is
   port(
@@ -16,30 +17,12 @@ end entity sineLoop;
 
 architecture behavioral of sineLoop is
 
-
   signal counter : integer range 0 to 360:= 0;
 
   constant DATA_WIDTH : integer :=8;
   constant MEM_DEPTH : integer := 360;
 
-  type mem_type is array (0 to MEM_DEPTH-1) of std_logic_vector(DATA_WIDTH-1 downto 0);
-
-  impure function init_mem(mif_file_name : in string) return mem_type is
-    file mif_file : text open read_mode is mif_file_name;
-    variable mif_line : line;
-    variable temp_bv : bit_vector(DATA_WIDTH-1 downto 0);
-    variable temp_mem : mem_type;
-  begin
-    for i in mem_type'range loop
-      readline(mif_file, mif_line);
-      read(mif_line, temp_bv);
-      temp_mem(i) := to_stdlogicvector(temp_bv);
-    end loop;
-    return temp_mem;
-  end function;
-
-  constant sinData : mem_type := init_mem("sines.mif");
-
+  constant sinData : t_slv_v(MEM_DEPTH-1 downto 0)(DATA_WIDTH-1 downto 0) := init_mem("sines.mif", MEM_DEPTH, DATA_WIDTH);
 
 begin
 

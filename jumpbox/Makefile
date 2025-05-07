@@ -8,16 +8,16 @@ PROJ = jumpbox_top
 PINS = iceFUN.pcf
 
 # VHDL files in dependancy order
-VHDL=useful_package.vhd
-VHDL=palettes.vhd
-#VHDL=jumpbox_package.vhd
+VHDL=../common/useful_package.vhd
+VHDL+=palettes.vhd
 VHDL+=move_1D.vhd
 VHDL+=lfsr.vhd
-#VHDL+=rom.vhd
-VHDL+=drawStaticImage.vhd
-#VHDL+=drawImage.vhd
+VHDL+=drawImage.vhd
 VHDL+=simple_480p.vhd
 VHDL+=pll.vhd
+VHDL+=../common/ledscan.vhd
+VHDL+=../music/play_tune.vhd
+VHDL+=../music/note_counter.vhd
 VHDL+=jumpbox_top.vhd
 
 GHDL=$(patsubst %.vhd, %.ghd, $(VHDL))

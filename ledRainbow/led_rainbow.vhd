@@ -1,8 +1,7 @@
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
---use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.Numeric_Std.ALL;
 
 entity led_worm is
   generic (

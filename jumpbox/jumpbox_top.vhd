@@ -17,7 +17,11 @@ entity jumpbox_top is
     vga_g : out std_logic_vector(1 downto 0);
     vga_b : out std_logic_vector(1 downto 0);
     vga_hsync : out std_logic;
-    vga_vsync : out std_logic
+    vga_vsync : out std_logic;
+
+    spkp     : out std_logic;
+    spkm     : out std_logic
+
 
 
   );
@@ -84,7 +88,57 @@ architecture behavioral of jumpbox_top is
 
   signal stopFall : std_logic := '0';
 
+  signal onHead : std_logic;
+
 begin
+
+  blk_music : block
+    signal counter_m : unsigned(31 downto 0) := (others => '0');
+    signal noteTime : std_logic_vector(14 downto 0);
+    signal note : std_logic;
+  begin
+
+  inst_music : entity work.play_tune
+    generic map(
+      notesFile => "../music/music-files/scotlandTheBrave.mif"
+    )
+      port map(
+        clkNote => counter_m(19),
+        key     => onHead,
+        note    => noteTime
+      );
+
+  inst_notes : entity work.note_counter
+    port map(
+      clk12MHz => clk12MHz,
+      noteTime => noteTime,
+      note     => note
+    );
+
+  spkp <= note;
+  spkm <= not note;
+
+  proc_counter : process(clk12MHz)
+  begin
+    if rising_edge(clk12MHz) then
+      counter_m <= counter_m + 1;
+    end if;
+  end process proc_counter;
+
+
+  end block blk_music;
+
+  inst_scan : entity work.ledscan
+    port map(
+      clk12MHz => clk12MHz,
+      leds1    => "11111111",
+      leds2    => "11111111",
+      leds3    => "11111111",
+      leds4    => "1111111"&onHead,
+      leds     => leds,
+      lcol     => lcols
+    );
+
 
   vga_r(0) <= RGB(5);
   vga_r(1) <= RGB(4);
@@ -162,12 +216,12 @@ begin
       end process proc_platforms;
 
 
-      inst_draw_platforms : entity work.drawStaticImage
+      inst_draw_platforms : entity work.drawImage
         generic map(
           FILENAME=>"block.mif",
           PALETTE=>blockPalette,
-          HEIGHT=>16,
-          WIDTH=>16
+          HEIGHT=>platform_size,
+          WIDTH=>platform_size
         )
         port map(
           clk => clk_pix,
@@ -236,11 +290,11 @@ begin
 
   begin
 
-    inst_draw_cone : entity work.drawStaticImage
+    inst_draw_cone : entity work.drawImage
       generic map(
-        ACTIVEHEIGHT=>16,
-        HEIGHT=>64,
-        WIDTH=>16,
+        ACTIVEHEIGHT=>jumpbox_height,
+        HEIGHT=>4*jumpbox_height,
+        WIDTH=>jumpbox_width,
         FILENAME => "cone.mif",
         PALETTE => conePalette,
         TRANSPARENT => 2,
@@ -259,10 +313,10 @@ begin
 
 
 
-    jumpBox_l <= '1' when (unsigned(sx) > jumpBox_x and unsigned(sx) <= jumpBox_x+16) and (unsigned(sy) > jumpBox_y  and unsigned(sy) <= jumpBox_y+16) else
+    jumpBox_l <= '1' when (unsigned(sx) > jumpBox_x and unsigned(sx) <= jumpBox_x+jumpbox_width) and (unsigned(sy) > jumpBox_y  and unsigned(sy) <= jumpBox_y+jumpbox_height) else
                  '0';
 
-    startindex <= local_counter * 16;
+    startindex <= local_counter * jumpbox_height;
 
     proc_walk : process(counter(20))
       begin
@@ -285,21 +339,14 @@ begin
 
 
   blk_duke : block
-
     signal duke_l : std_logic;
-
-
-    constant statue_x : unsigned(9 downto 0) := to_unsigned(27*16,10);
-    constant statue_y : unsigned(9 downto 0) := to_unsigned(15*16-97,10);
-
-
   begin
 
-      inst_draw_block : entity work.drawStaticImage
+      inst_draw_block : entity work.drawImage
       generic map(
-        ACTIVEHEIGHT=>97,
-        HEIGHT => 97,
-        WIDTH => 68,
+        ACTIVEHEIGHT=>statue_height,
+        HEIGHT => statue_height,
+        WIDTH => statue_width,
         FILENAME => "statue.mif",
         PALETTE => statuePalette,
         TRANSPARENT => 1,
@@ -314,23 +361,24 @@ begin
         active_o => duke
       );
 
-      duke_l <= '1' when (unsigned(sx) > statue_x and unsigned(sx) <= statue_x+68) and (unsigned(sy) > statue_y and unsigned(sy) <= statue_y+97) else
+      duke_l <= '1' when (unsigned(sx) > statue_x and unsigned(sx) <= statue_x+statue_width) and (unsigned(sy) > statue_y and unsigned(sy) <= statue_y+statue_height) else
            '0';
 
-
-
-      stopfall <= '1' when (jumpBox_x +16 > statue_x+35 and jumpBox_x <= statue_x + 40) and jumpBox_y + 16 = statue_y + 2 else
-                  '1' when (jumpBox_x +16 > statue_x+9 and jumpBox_x <= statue_x + 61)  and jumpBox_y + 16 = statue_y + 69 else
-                  '1' when (jumpBox_x +16 > statue_x+43 and jumpBox_x <= statue_x + 65) and jumpBox_y + 16 = statue_y + 24 else
-                  '1' when (jumpBox_x +16 > statue_x+5 and jumpBox_x <= statue_x + 16) and jumpBox_y + 16 = statue_y + 11 else
-                  '1' when (jumpBox_x +16 > statue_x+20 and jumpBox_x <= statue_x + 32) and jumpBox_y + 16 = statue_y + 18 else
+      stopfall <= '1' when (jumpBox_x +jumpbox_width > statue_x+35 and jumpBox_x <= statue_x + 40) and jumpBox_y + jumpbox_height = statue_y + 2 else
+                  '1' when (jumpBox_x +jumpbox_width > statue_x+9 and jumpBox_x <= statue_x + 61)  and jumpBox_y + jumpbox_height = statue_y + 69 else
+                  '1' when (jumpBox_x +jumpbox_width > statue_x+43 and jumpBox_x <= statue_x + 65) and jumpBox_y + jumpbox_height = statue_y + 24 else
+                  '1' when (jumpBox_x +jumpbox_width > statue_x+5 and jumpBox_x <= statue_x + 16) and jumpBox_y + jumpbox_height = statue_y + 11 else
+                  '1' when (jumpBox_x +jumpbox_width > statue_x+20 and jumpBox_x <= statue_x + 32) and jumpBox_y + jumpbox_height = statue_y + 18 else
                   '0';
+
+      onHead <= '0' when (jumpBox_x +jumpbox_width > statue_x+35 and jumpBox_x <= statue_x + 40) and jumpBox_y + jumpbox_height = statue_y + 2 else
+                '1';
 
   end block blk_duke;
 
 
 
-  inst_draw_floor : entity work.drawStaticImage
+  inst_draw_floor : entity work.drawImage
     generic map(
       FILENAME=>"bricks.mif",
       PALETTE=>bricksPalette,
@@ -347,7 +395,7 @@ begin
     );
 
 
-  floor <= '1' when (unsigned(sx) > 0 and unsigned(sx) <= 639) and (unsigned(sy) > floor_level  and unsigned(sy) <= 479) else
+  floor <= '1' when (unsigned(sx) > 0 and unsigned(sx) <= screen_width-1) and (unsigned(sy) > floor_level  and unsigned(sy) <= screen_height-1) else
              '0';
 
   proc_draw : process(clk_pix)

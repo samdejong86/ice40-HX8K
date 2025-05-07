@@ -6,29 +6,25 @@ library std ;
 use std.textio.all;
 use work.useful_package.all;
 
-
 entity drawImage is
-  generic (
-    MULTIPLICITY_X : integer := 1;
-    MULTIPLICITY_Y : integer := 1;
+  generic(
+    ACTIVEHEIGHT : integer := 16;
     HEIGHT : integer := 16;
     WIDTH : integer := 12;
     FILENAME : string := "";
     TRANSPARENT : integer := 4;
-    PALETTE : t_slv_v
+    PALETTE : t_slv_v;
+    OFFSET : boolean := true
   );
   port(
     clk : in std_logic;
-
     sx : in std_logic_vector(9 downto 0);
     sy : in std_logic_vector(9 downto 0);
-
     rgb : out std_logic_vector(5 downto 0);
-
-    active : out std_logic;
-
-    startX : in unsigned(9 downto 0);
-    startY : in unsigned(9 downto 0)
+    startIndex : in integer := 0;
+    mirror : in std_logic := '0';
+    active : in std_logic;
+    active_o : out std_logic
   );
 end entity drawImage;
 
@@ -40,94 +36,88 @@ architecture behavioral of drawImage is
 
   constant imageData : t_slv_v(HEIGHT-1 downto 0)(DATAWIDTH-1 downto 0) :=  init_mem(FILENAME, HEIGHT, DATAWIDTH);
 
-
-  signal address : integer := 0;
-
-  signal endX   : unsigned(9 downto 0);
-  signal endY   : unsigned(9 downto 0);
-
-  type state_t is (BEFORE_1LINE, RIGHTLINE, DRAWLINE, LINEDONE, DONE);
-  signal state : state_t := BEFORE_1LINE;
-
 begin
 
-  endX   <= startX+to_unsigned(width*MULTIPLICITY_X+1,10);
-  endY   <= startY+to_unsigned(height*MULTIPLICITY_Y+1+1,10);
+
 
   proc_draw : process(clk)
-    variable pixel : std_logic_vector(log2ceil(NCOLOURS)-1 downto 0);
-    variable counter_x : integer := 0;
-    variable counter_y : integer := 0;
-    variable square : std_logic := '0';
+    variable counter_x : integer range 0 to WIDTH-1 := 0;
+    variable counter_y : integer range 0 to HEIGHT-1 := 0;
+    variable pixels : std_logic_vector(log2ceil(NCOLOURS)-1 downto 0);
+    variable pixel : integer;
+    variable inProgress : std_logic;
+  begin
+    if rising_edge(clk) then
+      if sy = x"01E0" then-- reset at end of frame
 
-    begin
-      if rising_edge(clk) then
-        if sy = x"01E0" then
-          pixel := (others => '0');
-          counter_x := 0;
-          counter_y := 0;
-          state <= BEFORE_1LINE;
+        -- when mirroring, this should start at WIDTH-1
+        if mirror = '1' then
+          counter_x := WIDTH-1;
         else
+          counter_x := 0;
+        end if;
+        if OFFSET then
+          counter_y := 1 + startIndex;
+        else
+          counter_y := 0 + startIndex;
+        end if;
+        inProgress := '0';
 
-          case(state) is
+      else
 
-            when BEFORE_1LINE =>
-              if unsigned(sy) = startY then
-                state <= RIGHTLINE;
-              else
-                state <= BEFORE_1LINE;
-              end if;
+        if active = '1' then
+          active_o <= '1';
 
-            when RIGHTLINE =>
-              if unsigned(sx) = startX then
-                active <= '0';
-                state <= DRAWLINE;
-                address <= counter_y;
-              else
-                state <= RIGHTLINE;
-              end if;
+          if OFFSET then
+            -- when mirroring, this should count down
+            if mirror = '1' then
+              counter_x := counter_x-1;
+            else
+              counter_x := counter_x+1;
+            end if;
+          end if;
 
-            when DRAWLINE =>
-              pixel := imageData(address)(log2ceil(NCOLOURS)*(counter_x+1)-1 downto log2ceil(NCOLOURS)*counter_x);
-              if TRANSPARENT < 4 and unsigned(pixel) = TRANSPARENT then
-                active <= '0';
-              else
-                active <= '1';
-              end if;
-              RGB <= palette(to_integer(unsigned(pixel)));
-              counter_x := counter_x + 1;
-              if unsigned(sx) = endX - 1 then
-                state <= LINEDONE;
-              else
-                state <= DRAWLINE;
-                address <= counter_y;
-              end if;
+          pixels := imageData(counter_y)(log2ceil(NCOLOURS)*(counter_x+1)-1 downto log2ceil(NCOLOURS)*counter_x);
+          pixel := to_integer(unsigned(pixels));
 
+          if pixel = TRANSPARENT then
+            active_o <= '0';
+          end if;
 
-            when LINEDONE =>
-              active <= '0';
+          rgb <= palette(pixel);
+          inProgress := '1';
 
-              if sx = x"0288" then
-                if counter_y = HEIGHT*MULTIPLICITY_Y-1 then
-                  state <= DONE;
-                else
-                  counter_y := counter_y +1;
-                  counter_x := 0;
-                  state <= RIGHTLINE;
-                end if;
-              else
-                state <= LINEDONE;
-              end if;
+          if not OFFSET then
+            -- when mirroring, this should count down
+            if mirror = '1' then
+              counter_x := counter_x-1;
+            else
+              counter_x := counter_x+1;
+            end if;
+          end if;
 
-            when DONE =>
-              active <= '0';
-              null;
-
-
-          end case;
+        else
+          active_o <= '0';
         end if;
 
+        if sx = x"0288" and inProgress = '1' then
+        -- when mirroring, this should start at WIDTH-1
+        if mirror = '1' then
+          counter_x := WIDTH-1;
+        else
+          counter_x := 0;
+        end if;
+          if counter_y = ACTIVEHEIGHT then
+            counter_y := 1 + startIndex;
+            inProgress := '0';
+          else
+            counter_y := counter_y+1;
+          end if;
+        end if;
       end if;
-    end process proc_draw;
+    end if;
+
+
+  end process proc_draw;
 
 end architecture behavioral;

@@ -1,8 +1,9 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.Numeric_Std.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
+use work.useful_package.all;
 
 entity music_top is
   generic(
@@ -25,10 +26,8 @@ architecture behavioral of music_top is
 
   constant nSongs : integer := 4;
 
-  type t_slv_v is array(nSongs-1 downto 0) of std_logic_vector(14 downto 0);
-
   signal noteTime : std_logic_vector(14 downto 0);
-  signal noteTimes : t_slv_v;
+  signal noteTimes : t_slv_v(nSongs-1 downto 0)(14 downto 0);
 
   signal note : std_logic;
 

@@ -8,7 +8,7 @@ PROJ = bounce_top
 PINS = ../common/iceFUN.pcf
 
 # VHDL files in dependancy order
-VHDL=ledscan.vhd
+VHDL=../common/ledscan.vhd
 VHDL+=led_bounce.vhd
 VHDL+=bounce_top.vhd
 

@@ -4,6 +4,9 @@ use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 library std ;
 use std.textio.all;
+use work.useful_package.all;
+
+
 
 entity play_tune is
   generic(
@@ -22,24 +25,8 @@ architecture behavioral of play_tune is
 
   constant DATA_WIDTH : integer :=20;
 
-  constant MEM_DEPTH : integer := songMaxlength;
-  type mem_type is array (0 to MEM_DEPTH-1) of std_logic_vector(DATA_WIDTH-1 downto 0);
+  constant songData : t_slv_v(songMaxlength-1 downto 0)(DATA_WIDTH-1 downto 0) := init_mem(notesFile, songMaxlength, DATA_WIDTH);
 
-  impure function init_mem(mif_file_name : in string) return mem_type is
-    file mif_file : text open read_mode is mif_file_name;
-    variable mif_line : line;
-    variable temp_bv : bit_vector(DATA_WIDTH-1 downto 0);
-    variable temp_mem : mem_type;
-  begin
-    for i in mem_type'range loop
-      readline(mif_file, mif_line);
-      read(mif_line, temp_bv);
-      temp_mem(i) := to_stdlogicvector(temp_bv);
-    end loop;
-    return temp_mem;
-  end function;
-
-  constant songData : mem_type := init_mem(notesFile);
   constant songLength : unsigned := unsigned(songData(0));
 
   type t_state is (IDLE, PLAYNOTE, PAUSE);

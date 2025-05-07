@@ -18,6 +18,8 @@ package palettes is
   constant jumpbox_width : integer := 16;
   constant jumpbox_height : integer := 16;
 
+  constant platform_size : integer := 16;
+
 
   constant floor_level : integer := screen_height-1 - 32;
 
@@ -47,6 +49,11 @@ package palettes is
 
 
 
+  constant statue_height : integer := 97;
+  constant statue_width : integer := 68;
+
+  constant statue_x : unsigned(9 downto 0) := to_unsigned(27*platform_size,10);
+  constant statue_y : unsigned(9 downto 0) := to_unsigned(15*platform_size-statue_height,10);
   -- also add positions of fixed objects?
 
 

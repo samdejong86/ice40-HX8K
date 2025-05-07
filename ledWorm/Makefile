@@ -8,7 +8,7 @@ PROJ = worm_top
 PINS = ../common/iceFUN.pcf
 
 # VHDL files in dependancy order
-VHDL=ledscan.vhd
+VHDL=../common/ledscan.vhd
 VHDL+=led_worm.vhd
 VHDL+=worm_top.vhd
 
