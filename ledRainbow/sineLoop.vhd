@@ -22,7 +22,7 @@ architecture behavioral of sineLoop is
   constant DATA_WIDTH : integer :=8;
   constant MEM_DEPTH : integer := 360;
 
-  constant sinData : t_slv_v(MEM_DEPTH-1 downto 0)(DATA_WIDTH-1 downto 0) := init_mem("sines.mif", MEM_DEPTH, DATA_WIDTH);
+  constant sinData : t_slv_v(MEM_DEPTH-1 downto 0)(DATA_WIDTH-1 downto 0) := init_mem("sines.mif", MEM_DEPTH, DATA_WIDTH, false);
 
 begin
 
