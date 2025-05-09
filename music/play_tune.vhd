@@ -1,6 +1,6 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.Numeric_Std.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 library std ;
 use std.textio.all;
@@ -25,19 +25,20 @@ architecture behavioral of play_tune is
 
   constant DATA_WIDTH : integer :=20;
 
-  constant songData : t_slv_v(songMaxlength-1 downto 0)(DATA_WIDTH-1 downto 0) := init_mem(notesFile, songMaxlength, DATA_WIDTH);
+  constant songData : t_slv_v(songMaxlength-1 downto 0)(DATA_WIDTH-1 downto 0) := init_mem(notesFile, songMaxlength, DATA_WIDTH, false);
 
   constant songLength : unsigned := unsigned(songData(0));
 
   type t_state is (IDLE, PLAYNOTE, PAUSE);
   signal state : t_state := IDLE;
 
-  signal noteCounter : integer range 0 to conv_integer(songLength);
+  signal noteCounter : integer range 0 to to_integer(songLength);
   signal holdCounter : unsigned(4 downto 0);
 
   signal duration : unsigned(4 downto 0);
 
   signal nowPlaying_l : std_logic := '0';
+
 
 begin
 

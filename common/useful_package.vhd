@@ -14,7 +14,7 @@ package useful_package is
   function ite(cond : boolean; value1 : integer; value2 : integer) return integer;
   function reverse_any_vector (a: in std_logic_vector) return std_logic_vector;
   function rotate_2d_vector(a: in t_slv_v) return t_slv_v;
-  impure function init_mem(mif_file_name : in string; depth : in integer; width : in integer) return t_slv_v;
+  impure function init_mem(mif_file_name : in string; depth : in integer; width : in integer; reverse : boolean := true) return t_slv_v;
 
 end package useful_package;
 
@@ -70,7 +70,7 @@ package body useful_package is
 
 
 
-  impure function init_mem(mif_file_name : in string; depth : in integer; width : in integer) return t_slv_v is
+  impure function init_mem(mif_file_name : in string; depth : in integer; width : in integer; reverse : boolean := true) return t_slv_v is
     file mif_file : text open read_mode is mif_file_name;
     variable mif_line : line;
     variable temp_bv : bit_vector(width-1 downto 0);
@@ -79,7 +79,11 @@ package body useful_package is
     for i in 0 to depth-1 loop
       readline(mif_file, mif_line);
       read(mif_line, temp_bv);
-      temp_mem(i) := reverse_any_vector(to_stdlogicvector(temp_bv));
+      if reverse then
+        temp_mem(i) := reverse_any_vector(to_stdlogicvector(temp_bv));
+      else
+        temp_mem(i) := to_stdlogicvector(temp_bv);
+      end if;
     end loop;
     return temp_mem;
   end function;
