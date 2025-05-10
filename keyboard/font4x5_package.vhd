@@ -35,7 +35,7 @@ package font4x8 is
   constant asterisk    : std_logic_vector(31 downto 0) := x"2A1C1C2A"; -- *
   constant curl_open   : std_logic_vector(31 downto 0) := x"08768181"; -- {
   constant curl_close  : std_logic_vector(31 downto 0) := x"81817608"; -- }
-  constant pile        : std_logic_vector(31 downto 0) := x"0000FF00"; -- |
+  constant pipe        : std_logic_vector(31 downto 0) := x"0000FF00"; -- |
   constant comma       : std_logic_vector(31 downto 0) := x"00806000"; -- ,
   constant underscore  : std_logic_vector(31 downto 0) := x"80808080"; -- _
   constant anglequote  : std_logic_vector(31 downto 0) := x"00010204"; -- `

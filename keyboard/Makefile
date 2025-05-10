@@ -9,6 +9,7 @@ PINS = iceFUN.pcf
 
 # VHDL files in dependancy order
 VHDL=../common/useful_package.vhd
+VHDL=../common/ledscan.vhd
 VHDL+=font4x5_package.vhd
 VHDL+=ps2_rx.vhd
 VHDL+=keyboard.vhd
