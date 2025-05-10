@@ -15,8 +15,8 @@ package palettes is
   constant levelHeight : integer := screen_height/16 -2;
 
 
-  constant jumpbox_width : integer := 16;
-  constant jumpbox_height : integer := 16;
+  constant jumpcone_width : integer := 16;
+  constant jumpcone_height : integer := 16;
 
   constant platform_size : integer := 16;
 

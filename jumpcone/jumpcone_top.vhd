@@ -6,7 +6,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use work.useful_package.all;
 use work.palettes.all;
 
-entity jumpbox_top is
+entity jumpcone_top is
   port(
     clk12MHz : in std_logic;
     keys     : in std_logic_vector(3 downto 0);
@@ -25,9 +25,9 @@ entity jumpbox_top is
 
 
   );
-end entity jumpbox_top;
+end entity jumpcone_top;
 
-architecture behavioral of jumpbox_top is
+architecture behavioral of jumpcone_top is
 
 
   signal counter : unsigned(31 downto 0) := (others => '0');
@@ -68,10 +68,10 @@ architecture behavioral of jumpbox_top is
   signal floor : std_logic;
   signal floor_colour : std_logic_vector(5 downto 0) := "010000"; --#550000
 
-  signal jumpBox : std_logic;
-  signal jumpBox_colour : std_logic_vector(5 downto 0) := "111111"; --#FFFFFF
-  signal jumpBox_x : unsigned(9 downto 0);
-  signal jumpBox_y : unsigned(9 downto 0);
+  signal jumpCone : std_logic;
+  signal jumpCone_colour : std_logic_vector(5 downto 0) := "111111"; --#FFFFFF
+  signal jumpCone_x : unsigned(9 downto 0);
+  signal jumpCone_y : unsigned(9 downto 0);
 
   signal platforms : std_logic;
 
@@ -236,34 +236,34 @@ begin
   inst_move_x : entity work.move_1D
     generic map(
       GRAVITY => false,
-      MAX_POS => screen_width-jumpbox_width-1
+      MAX_POS => screen_width-jumpcone_width-1
     )
     port map(
       clk => counter(17),
       rst => rst_pix,
       forward => keys(0),
       backward => keys(1),
-      pos => jumpbox_x,
-      pos_perp => jumpbox_y,
+      pos => jumpcone_x,
+      pos_perp => jumpcone_y,
       platformData => platformData
     );
 
   inst_move_y : entity work.move_1D
     generic map(
       GRAVITY => true,
-      MAX_POS => floor_level-jumpbox_height,
+      MAX_POS => floor_level-jumpcone_height,
       dim => levelWidth,
       dim_perp => levelHeight,
-      STARTPT => floor_level-jumpbox_height,
+      STARTPT => floor_level-jumpcone_height,
       CALC_WIDTH=>20
     )
     port map(
       clk => counter(14),
       rst => rst_pix,
       forward => keys(2),
-      pos => jumpbox_y,
+      pos => jumpcone_y,
       stopFall => stopFall,
-      pos_perp => jumpbox_x,
+      pos_perp => jumpcone_x,
       platformData => platformData_r
     );
 
@@ -277,10 +277,10 @@ begin
   debug3 <= '1' when (unsigned(sx) > 20 and unsigned(sx) < 30) and (unsigned(sy) > 100  and unsigned(sy) < 110) else
            '0';
 
-  blk_jumbox_draw : block
+  blk_jumcone_draw : block
 
 
-    signal jumpBox_l : std_logic;
+    signal jumpCone_l : std_logic;
 
     signal startindex : integer := 0;
 
@@ -292,9 +292,9 @@ begin
 
     inst_draw_cone : entity work.drawImage
       generic map(
-        ACTIVEHEIGHT=>jumpbox_height,
-        HEIGHT=>4*jumpbox_height,
-        WIDTH=>jumpbox_width,
+        ACTIVEHEIGHT=>jumpcone_height,
+        HEIGHT=>4*jumpcone_height,
+        WIDTH=>jumpcone_width,
         FILENAME => "cone.mif",
         PALETTE => conePalette,
         TRANSPARENT => 2,
@@ -306,17 +306,17 @@ begin
         sy => sy,
         mirror => not keys(0),
         startIndex=> startindex,
-        rgb => jumpBox_colour,
-        active => jumpBox_l,
-        active_o => jumpBox
+        rgb => jumpCone_colour,
+        active => jumpCone_l,
+        active_o => jumpCone
       );
 
 
 
-    jumpBox_l <= '1' when (unsigned(sx) > jumpBox_x and unsigned(sx) <= jumpBox_x+jumpbox_width) and (unsigned(sy) > jumpBox_y  and unsigned(sy) <= jumpBox_y+jumpbox_height) else
+    jumpCone_l <= '1' when (unsigned(sx) > jumpCone_x and unsigned(sx) <= jumpCone_x+jumpcone_width) and (unsigned(sy) > jumpCone_y  and unsigned(sy) <= jumpCone_y+jumpcone_height) else
                  '0';
 
-    startindex <= local_counter * jumpbox_height;
+    startindex <= local_counter * jumpcone_height;
 
     proc_walk : process(counter(20))
       begin
@@ -335,7 +335,7 @@ begin
       end process proc_walk;
 
 
-  end block blk_jumbox_draw;
+  end block blk_jumcone_draw;
 
 
   blk_duke : block
@@ -364,14 +364,14 @@ begin
       duke_l <= '1' when (unsigned(sx) > statue_x and unsigned(sx) <= statue_x+statue_width) and (unsigned(sy) > statue_y and unsigned(sy) <= statue_y+statue_height) else
            '0';
 
-      stopfall <= '1' when (jumpBox_x +jumpbox_width > statue_x+35 and jumpBox_x <= statue_x + 40) and jumpBox_y + jumpbox_height = statue_y + 2 else
-                  '1' when (jumpBox_x +jumpbox_width > statue_x+9 and jumpBox_x <= statue_x + 61)  and jumpBox_y + jumpbox_height = statue_y + 69 else
-                  '1' when (jumpBox_x +jumpbox_width > statue_x+43 and jumpBox_x <= statue_x + 65) and jumpBox_y + jumpbox_height = statue_y + 24 else
-                  '1' when (jumpBox_x +jumpbox_width > statue_x+5 and jumpBox_x <= statue_x + 16) and jumpBox_y + jumpbox_height = statue_y + 11 else
-                  '1' when (jumpBox_x +jumpbox_width > statue_x+20 and jumpBox_x <= statue_x + 32) and jumpBox_y + jumpbox_height = statue_y + 18 else
+      stopfall <= '1' when (jumpCone_x +jumpcone_width > statue_x+35 and jumpCone_x <= statue_x + 40) and jumpCone_y + jumpcone_height = statue_y + 2 else
+                  '1' when (jumpCone_x +jumpcone_width > statue_x+9 and jumpCone_x <= statue_x + 61)  and jumpCone_y + jumpcone_height = statue_y + 69 else
+                  '1' when (jumpCone_x +jumpcone_width > statue_x+43 and jumpCone_x <= statue_x + 65) and jumpCone_y + jumpcone_height = statue_y + 24 else
+                  '1' when (jumpCone_x +jumpcone_width > statue_x+5 and jumpCone_x <= statue_x + 16) and jumpCone_y + jumpcone_height = statue_y + 11 else
+                  '1' when (jumpCone_x +jumpcone_width > statue_x+20 and jumpCone_x <= statue_x + 32) and jumpCone_y + jumpcone_height = statue_y + 18 else
                   '0';
 
-      onHead <= '0' when (jumpBox_x +jumpbox_width > statue_x+35 and jumpBox_x <= statue_x + 40) and jumpBox_y + jumpbox_height = statue_y + 2 else
+      onHead <= '0' when (jumpCone_x +jumpcone_width > statue_x+35 and jumpCone_x <= statue_x + 40) and jumpCone_y + jumpcone_height = statue_y + 2 else
                 '1';
 
   end block blk_duke;
@@ -408,8 +408,8 @@ begin
             RGB <= debug2_colour;
           elsif debug3 = '1' then
             RGB <= debug3_colour;
-          elsif jumpBox = '1' then
-            RGB <= jumpBox_colour;
+          elsif jumpCone = '1' then
+            RGB <= jumpCone_colour;
           elsif duke = '1' then
             RGB <= dukecolour;
           elsif platforms = '1' then

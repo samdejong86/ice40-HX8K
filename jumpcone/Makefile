@@ -1,7 +1,7 @@
 # Project setup
 
 # Top level entity
-PROJ = jumpbox_top
+PROJ = jumpcone_top
 
 
 # Pin constraints
@@ -18,7 +18,7 @@ VHDL+=pll.vhd
 VHDL+=../common/ledscan.vhd
 VHDL+=../music/play_tune.vhd
 VHDL+=../music/note_counter.vhd
-VHDL+=jumpbox_top.vhd
+VHDL+=jumpcone_top.vhd
 
 GHDL=$(patsubst %.vhd, %.ghd, $(VHDL))
 
