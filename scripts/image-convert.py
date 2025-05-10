@@ -82,7 +82,41 @@ width, height = img.size
 colours = rgb_im.convert("RGB").getcolors() #this converts the mode to RGB
 new_colours = [colours[i][1] for i in range(len(colours))]
 
+# find closest colours what's in the image, remove duplicates to create a closest colour list.
+
+allowed_colours = ['{0:06b}'.format(i) for i in range(64)]
+allowed_colours_hex=[]
+allowed_colours_rgb=[]
+
+for c in allowed_colours:
+    #print(c_6b_24b(c))
+    c_hex = c_6b_24b(c)
+    c_rgb = hex_to_rgb(c_hex)
+
+
+    allowed_colours_hex.append(c_hex)
+    allowed_colours_rgb.append(c_rgb)
+
+
+
+
+closestColours = []
+for colour in new_colours:
+
+    rgb = list(colour)
+    closest_colour = closest(allowed_colours_rgb, rgb)
+    print(closest_colour[0])
+    #closest_colour_hex = rgb_to_hex(closest_colour[0])
+
+    #colours = [rgb_to_hex(rgb), closest_colour_hex, c_25b_6b(closest_colour_hex)]
+    closestColours.append(tuple(closest_colour[0]))
+
+
+
+print(closestColours)
+
 indexData = [["" for i in range(width)] for j in range(height)]
+
 
 for i in range(width):
     for j in range(height):
