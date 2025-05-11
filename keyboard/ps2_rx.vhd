@@ -1,3 +1,15 @@
+--
+-- VHDL version of 'ps2_rx.v', a verilog module written by github user jconenna.
+-- Logical flow was designed by that user, I rewrote the code into VHDL.
+--
+-- Verilog source is available in this repository:
+--   https://github.com/jconenna/FPGA-Projects/tree/master
+--
+-- A useful blog post on the subject written by jconenna can be found here:
+--   https://embeddedthoughts.com/2016/07/05/fpga-keyboard-interface/
+--
+
+
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.Numeric_Std.ALL;

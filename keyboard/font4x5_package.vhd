@@ -1,3 +1,13 @@
+--
+-- 4x8 font for iceFun 4x8 LED display.
+--
+-- Based on original design by Robin Grosset
+--  https://github.com/robin7g/rg-iceFUN/blob/main/scrolltext/4x8font.v
+--
+-- I have added some additional symbols as well as lowercase letters
+--
+
+
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.Numeric_Std.ALL;
@@ -7,7 +17,7 @@ package font4x8 is
 
   constant single_space : std_logic_vector(7 downto 0) := x"00";
 
-  -- symbols
+  -- symbols from original 4x8 font
   constant space       : std_logic_vector(31 downto 0) := x"00000000";
   constant explamation : std_logic_vector(31 downto 0) := x"00005F00"; -- !
   constant question    : std_logic_vector(31 downto 0) := x"02015906"; -- ?
@@ -24,6 +34,8 @@ package font4x8 is
   constant close_sq    : std_logic_vector(31 downto 0) := x"0081FF00"; -- ]
   constant open_br     : std_logic_vector(31 downto 0) := x"3C428100"; -- (
   constant close_br    : std_logic_vector(31 downto 0) := x"0081423C"; -- )
+
+  -- additional symbols added
   constant singlequote : std_logic_vector(31 downto 0) := x"00030000"; -- '
   constant doublequote : std_logic_vector(31 downto 0) := x"00018003"; -- "
   constant dollar      : std_logic_vector(31 downto 0) := x"244BD224"; -- $
@@ -44,7 +56,7 @@ package font4x8 is
   constant angle_close : std_logic_vector(31 downto 0) := x"82442810"; -- >
 
 
-  -- numbers
+  -- numbers from original 4x8 font
   constant zero  : std_logic_vector(31 downto 0) := x"7E91897E";
   constant one   : std_logic_vector(31 downto 0) := x"0002FF00";
   constant two   : std_logic_vector(31 downto 0) := x"F2898986";
@@ -56,7 +68,7 @@ package font4x8 is
   constant eight : std_logic_vector(31 downto 0) := x"76898976";
   constant nine  : std_logic_vector(31 downto 0) := x"4689897E";
 
-  -- Uppercase letters
+  -- Uppercase letters from original 4x8 font
   constant A_u : std_logic_vector(31 downto 0) := x"FE0909FE";
   constant B_u : std_logic_vector(31 downto 0) := x"FF898976";
   constant C_u : std_logic_vector(31 downto 0) := x"7E818142";
@@ -84,7 +96,7 @@ package font4x8 is
   constant Y_u : std_logic_vector(31 downto 0) := x"0304F807";
   constant Z_u : std_logic_vector(31 downto 0) := x"E1918987";
 
-  -- Lowercase letters
+  -- Lowercase letters added by me
   constant a_l : std_logic_vector(31 downto 0) := x"1824243C";
   constant b_l : std_logic_vector(31 downto 0) := x"FF909060";
   constant c_l : std_logic_vector(31 downto 0) := x"1C222214";
